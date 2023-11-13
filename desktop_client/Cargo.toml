@@ -1,6 +1,8 @@
 [package]
 name = "desktop_client"
 version = "0.1.0"
+authors = ["Rastislav Kish <rastislav.kish@protonmail.com>"]
+license = "GPL-3.0-only"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
