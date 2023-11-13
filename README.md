@@ -41,6 +41,7 @@ Sync mode exists for this reason. It just *synchronises* the states of your syst
 ### Dependencies
 
 * The [Rust programming language](https://www.rust-lang.org/tools/install)
+* libxdo-dev on Linux
 
 ### Building
 
@@ -64,8 +65,6 @@ clipshare daemon
 
 To have clipshare running in the background, listening to the configured shortcuts.
 
-Note this doesn't seem to work just yet on Windows (feedback appreciated), what should be addressed soon.
-
 Another approach is to use direct commands:
 
 ```
@@ -78,7 +77,7 @@ and
 clipshare paste
 ```
 
-For setting up one's own shortcut handling, for example through Autohotkey on Windows. See the --help flag for an overview of supported settings.
+For setting up one's own shortcut handling. See the --help flag for an overview of supported settings.
 
 ### A security notice
 
