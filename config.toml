@@ -1,0 +1,11 @@
+default_clipboard="Primary"
+
+[clipboards.Primary]
+
+host="https://clipshare.rastislavkish.xyz:3127"
+password="Password"
+copy_hotkey="Alt+C"
+paste_hotkey="Alt+P"
+sync_copy_hotkey="Alt+Shift+C"
+sync_paste_hotkey="Alt+Shift+P"
+
