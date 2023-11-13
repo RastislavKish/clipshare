@@ -34,12 +34,21 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Displays the shared clipboard ID
+    Id(IdArgs),
     /// Launches the Clipbshare daemon
     Daemon(DaemonArgs),
     /// Copies content to the shared clipboard
     Copy(CopyArgs),
     /// Pastes content from the shared clipboard
     Paste(PasteArgs),
+    }
+
+#[derive(Args)]
+struct IdArgs {
+    /// Sets the clipboard to use
+    #[arg(short, long)]
+    clipboard: Option<String>,
     }
 
 #[derive(Args)]
@@ -72,6 +81,7 @@ fn main() -> Result<(), anyhow::Error> {
     let config=Config::load()?;
 
     match &cli.command {
+        Commands::Id(args) => id_command(args, &config),
         Commands::Daemon(args) => daemon_command(args, &config),
         Commands::Copy(args) => copy_command(args, &config),
         Commands::Paste(args) => paste_command(args, &config),
@@ -81,6 +91,18 @@ fn main() -> Result<(), anyhow::Error> {
     Ok(())
     }
 
+fn id_command(args: &IdArgs, config: &Config) -> Result<(), anyhow::Error> {
+    let clipboard_name=match &args.clipboard {
+        Some(c) => c.to_string(),
+        None => config.default_clipboard().to_string(),
+        };
+
+    let shared_clipboard=get_shared_clipboard(&clipboard_name, config)?;
+
+    notify(&format!("Clipboard {} id: {}", clipboard_name, shared_clipboard.clipboard_id()), true);
+
+    Ok(())
+    }
 fn daemon_command(_args: &DaemonArgs, config: &Config) -> Result<(), anyhow::Error> {
     let event_loop=EventLoopBuilder::new().build()?;
 
