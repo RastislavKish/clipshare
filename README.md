@@ -30,6 +30,12 @@ In the configuration of your clients (config.toml read either from the program d
 
 Linux and Windows platforms are supported at the moment.
 
+### Sync mode
+
+A little terminology clearup, Clipshare is designed in such a way that you shouldn't need to use Ctrl+C or Ctrl+V shortcuts, the program emulates them for you automatically. However, there are times when you may want to just copy what you have in your system clipboard or to paste into your system clipboard, for example because the app you're using implements non-standard copy/paste shortcuts.
+
+Sync mode exists for this reason. It just *synchronises* the states of your system and shared clipboard, in the direction of normal operation i.e. copying system -> shared, pasting shared -> system. The daemon command of Clipshare supports configuring shortcuts for sync copy / paste, using copy and paste Clipshare commands gives you a flag for activating sync mode.
+
 ## Build
 
 ### Dependencies
