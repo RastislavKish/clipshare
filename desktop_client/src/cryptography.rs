@@ -70,6 +70,6 @@ pub fn calculate_pseudosalted_password_hash(password: &str) -> String {
     let password_hash=argon2.hash_password(password.as_bytes(), Salt::from_b64("5eVS51U/D9XXhWK37D6qAg").unwrap()).unwrap();
     let hash=password_hash.hash.unwrap().to_string();
 
-    return hash.replace('+', "-").replace('/', "_")
+    hash.replace('+', "-").replace('/', "_")
     }
 

@@ -15,7 +15,9 @@ pub struct Config {
 impl Config {
 
     pub fn from_toml(content: &str) -> Result<Config, anyhow::Error> {
-        Ok(toml::from_str(content).context("Unable to parse the configuration")?)
+        let config=toml::from_str(content).context("Unable to parse the configuration")?;
+
+        Ok(config)
         }
     pub fn load() -> Result<Config, anyhow::Error> {
         let mut local_config_path=std::env::current_exe().unwrap();
@@ -33,7 +35,7 @@ impl Config {
         .filter(|path| path.exists() && path.is_file())
         .collect();
 
-        for path in config_paths {
+        if let Some(path)=config_paths.into_iter().next() {
             let content=fs::read_to_string(&path).with_context(|| format!("Unable to read config from {path:?}"))?;
             let config=Config::from_toml(&content).with_context(|| format!("Unable to parse the config from {path:?}"))?;
 

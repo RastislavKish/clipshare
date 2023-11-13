@@ -213,7 +213,12 @@ impl ClipboardMonitor {
         .fold(0, |total_used_space, clipboard| total_used_space+clipboard.size());
         }
     }
+impl Default for ClipboardMonitor {
 
+    fn default() -> ClipboardMonitor {
+        ClipboardMonitor::new()
+        }
+    }
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
@@ -253,10 +258,8 @@ async fn get_clipboard(Path(id): Path<String>) -> (StatusCode, String) {
     if !CLIPBOARD_ID_REGEX.is_match(&id) {
         return (StatusCode::BAD_REQUEST, String::from("Invalid clipboard ID"));
         }
-    if !RESTRICTED_TO.is_empty() {
-        if !RESTRICTED_TO.contains(&id) {
-            return (StatusCode::UNAUTHORIZED, String::from("Unauthorized clipboard ID"));
-            }
+    if !RESTRICTED_TO.is_empty() && !RESTRICTED_TO.contains(&id) {
+        return (StatusCode::UNAUTHORIZED, String::from("Unauthorized clipboard ID"));
         }
 
     if let Ok(mut connection)=REDIS_CLIENT.get_async_connection().await {
@@ -275,10 +278,8 @@ async fn set_clipboard(Path(id): Path<String>, body: String) -> (StatusCode, Str
     if !CLIPBOARD_ID_REGEX.is_match(&id) {
         return (StatusCode::BAD_REQUEST, String::from("Invalid clipboard ID"));
         }
-    if !RESTRICTED_TO.is_empty() {
-        if !RESTRICTED_TO.contains(&id) {
-            return (StatusCode::UNAUTHORIZED, String::from("Unauthorised ID"));
-            }
+    if !RESTRICTED_TO.is_empty() && RESTRICTED_TO.contains(&id) {
+        return (StatusCode::UNAUTHORIZED, String::from("Unauthorised ID"));
         }
     if body.len()>*CLIPBOARD_CONTENT_MAX_SIZE || !CLIPBOARD_CONTENT_REGEX.is_match(&body) {
         return (StatusCode::BAD_REQUEST, String::from("Invalid clipboard content"));

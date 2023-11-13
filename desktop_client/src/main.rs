@@ -326,7 +326,7 @@ fn get_shared_clipboard(clipboard_name: &str, config: &Config) -> Result<Rc<Shar
 
     let clipboard_configuration=&config.clipboards()[clipboard_name];
     let clipshare=Clipshare::new(clipboard_configuration.host());
-    let shared_clipboard=Rc::new(SharedClipboard::new(&clipboard_name, clipshare, clipboard_configuration.password()));
+    let shared_clipboard=Rc::new(SharedClipboard::new(clipboard_name, clipshare, clipboard_configuration.password()));
 
     Ok(shared_clipboard)
     }
