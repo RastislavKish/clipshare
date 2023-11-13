@@ -26,7 +26,7 @@ On a different machine, you press Clipshare's paste shortcut, first the program 
 
 you can do this as many times as you like, the server will keep the content for serverside-configurable amount of time, 5 minutes by default. Right now, only text copying is supported, though files and directories are certainly on the roadmap. The server also sets the max size per shared clipboard, which is 5 MB by default, this should suffice even for long texts.
 
-In the configuration of your clients (config.toml read either from the program directory or the system's native config dir/clipshare), you can configure as many clipboards as you want. You can use them as a standard multiclipboard, but you can also scope access in this way, having separate clipboards with separate encryption passwords for your personal computers, for your development VMs, or you can even setup clipboards for sharing data with your friends.
+In the configuration of your clients (config.toml read either from the program directory or the system's native config dir/clipshare, see the repo for the recommended default), you can configure as many clipboards as you want. You can use them as a standard multiclipboard, but you can also scope access in this way, having separate clipboards with separate encryption passwords for your personal computers, for your development VMs, or you can even setup clipboards for sharing data with your friends.
 
 Linux and Windows platforms are supported at the moment.
 
