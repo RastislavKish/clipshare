@@ -11,6 +11,7 @@ use global_hotkey::{
     };
 use lazy_static::lazy_static;
 use notify_rust::Notification;
+use winit::event_loop::{ControlFlow, EventLoopBuilder};
 
 mod configuration;
 mod core;
@@ -81,6 +82,8 @@ fn main() -> Result<(), anyhow::Error> {
     }
 
 fn daemon_command(_args: &DaemonArgs, config: &Config) -> Result<(), anyhow::Error> {
+    let event_loop=EventLoopBuilder::new().build()?;
+
     let manager=GlobalHotKeyManager::new().context("Unable to optain the global hotkey manager")?;
 
     let mut copy_hotkeys: HashMap<u32, Rc<SharedClipboard>>=HashMap::new();
@@ -140,28 +143,34 @@ fn daemon_command(_args: &DaemonArgs, config: &Config) -> Result<(), anyhow::Err
 
         }
 
-    for event in GlobalHotKeyEvent::receiver() {
-        if event.state()!=HotKeyState::Released {
-            continue;
-            }
+    let global_hotkey_channel=GlobalHotKeyEvent::receiver();
 
-        if copy_hotkeys.contains_key(&event.id()) {
-            copy(copy_hotkeys[&event.id()].clone())
-            .unwrap_or_else(|e| notify_err(e, true));
+    event_loop.run(move |_event, event_loop| {
+        event_loop.set_control_flow(ControlFlow::Poll);
+
+        if let Ok(event)=global_hotkey_channel.try_recv() {
+            if event.state()!=HotKeyState::Released {
+                return;
+                }
+
+            if copy_hotkeys.contains_key(&event.id()) {
+                copy(copy_hotkeys[&event.id()].clone())
+                .unwrap_or_else(|e| notify_err(e, true));
+                }
+            else if paste_hotkeys.contains_key(&event.id()) {
+                paste(paste_hotkeys[&event.id()].clone())
+                .unwrap_or_else(|e| notify_err(e, true));
+                }
+            else if sync_copy_hotkeys.contains_key(&event.id()) {
+                sync_copy(sync_copy_hotkeys[&event.id()].clone())
+                .unwrap_or_else(|e| notify_err(e, true));
+                }
+            else if sync_paste_hotkeys.contains_key(&event.id()) {
+                sync_paste(sync_paste_hotkeys[&event.id()].clone())
+                .unwrap_or_else(|e| notify_err(e, true));
+                }
             }
-        else if paste_hotkeys.contains_key(&event.id()) {
-            paste(paste_hotkeys[&event.id()].clone())
-            .unwrap_or_else(|e| notify_err(e, true));
-            }
-        else if sync_copy_hotkeys.contains_key(&event.id()) {
-            sync_copy(sync_copy_hotkeys[&event.id()].clone())
-            .unwrap_or_else(|e| notify_err(e, true));
-            }
-        else if sync_paste_hotkeys.contains_key(&event.id()) {
-            sync_paste(sync_paste_hotkeys[&event.id()].clone())
-            .unwrap_or_else(|e| notify_err(e, true));
-            }
-        }
+        })?;
 
     Ok(())
     }
