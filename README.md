@@ -79,6 +79,12 @@ clipshare paste
 
 For setting up one's own shortcut handling. See the --help flag for an overview of supported settings.
 
+### Setup default configuration
+
+Note: By default, without any configuration file, clipshare doesn't capture any shortcuts. The reason is cleaner and more straight-forward configuration file, where the user only needs to specify which shortcuts they want the program to use, there is no need to disable shortcuts they don't want.
+
+However, as a consequence, you either need to create a configuration file if you want to use copy shortcuts, or, you can use the recommended default config.toml in this repository. Place the file either next to the clipshare executable, or create a clipshare in your OS' configuration directory and place the file in it.
+
 ### A security notice
 
 Clipshare pays great attention on securing your data during the transport from one computer to another. However, there is not yet a particular emphasis on hardware security of the clients, like erasing the clipboard content from memory after use, properly zeroing encryption keys etc. Keep it in mind when working with sensitive data, just like you do with your system clipboard.
