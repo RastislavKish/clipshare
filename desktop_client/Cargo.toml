@@ -1,6 +1,6 @@
 [package]
 name = "desktop_client"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Rastislav Kish <rastislav.kish@protonmail.com>"]
 license = "GPL-3.0-only"
 edition = "2021"
@@ -17,7 +17,7 @@ argon2="0.5.2"
 rand="0.8.5"
 
 anyhow="1.0.75"
-arboard="3.2.1"
+arboard="3.3.0"
 clap = { version = "4.4.7", features = ["derive"] }
 derive-getters="0.3.0"
 dirs="5.0.1"
