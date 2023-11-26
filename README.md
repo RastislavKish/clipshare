@@ -36,7 +36,19 @@ A little terminology clearup, Clipshare is designed in such a way that you shoul
 
 Sync mode exists for this reason. It just *synchronises* the states of your system and shared clipboard, in the direction of normal operation i.e. copying system -> shared, pasting shared -> system. The daemon command of Clipshare supports configuring shortcuts for sync copy / paste, using copy and paste Clipshare commands gives you a flag for activating sync mode.
 
-## Build
+## Installation and usage
+
+First, get the Clipshare binary, either via the Github Releases or compile from source as described below. Put it into a stable place, like /usr/local/bin on Linux or C:\\Program files\\Clipshare\\clipshare on Windows.
+
+Next, download the [configuration file](https://github.com/RastislavKish/clipshare/blob/main/config.toml) and change it to your liking, most importantly, change the password of the Primary clipboard to a long, random string. Then, place the configuration file either next to the executable, or to your OS specific config dir, like ~/.config/clipshare on Linux.
+
+When done, the most convenient thing is to make Clipshare run after the system start. Among the commands that are run, include "clipshare daemon", on Linux, or, "C:\\Program files\\clipshare\\clipshare.exe daemon" on Windows. After the program is run, pressing your configured shortcuts should trigger Clipshare notifications.
+
+### A security notice
+
+Clipshare pays great attention on securing your data during the transport from one computer to another. However, there is not yet a particular emphasis on hardware security of the clients, like erasing the clipboard content from memory after use, properly zeroing encryption keys etc. Keep it in mind when working with sensitive data, just like you do with your system clipboard.
+
+## Build from source
 
 ### Dependencies
 
@@ -54,40 +66,6 @@ cargo build --release -q
 cd ../server
 cargo build --release -q
 ```
-
-## Usage
-
-Run
-
-```
-clipshare daemon
-```
-
-To have clipshare running in the background, listening to the configured shortcuts.
-
-Another approach is to use direct commands:
-
-```
-clipshare copy
-```
-
-and
-
-```
-clipshare paste
-```
-
-For setting up one's own shortcut handling. See the --help flag for an overview of supported settings.
-
-### Setup default configuration
-
-Note: By default, without any configuration file, clipshare doesn't capture any shortcuts. The reason is cleaner and more straight-forward configuration file, where the user only needs to specify which shortcuts they want the program to use, there is no need to disable shortcuts they don't want.
-
-However, as a consequence, you either need to create a configuration file if you want to use copy shortcuts, or, you can use the recommended default config.toml in this repository. Place the file either next to the clipshare executable, or create a clipshare in your OS' configuration directory and place the file in it.
-
-### A security notice
-
-Clipshare pays great attention on securing your data during the transport from one computer to another. However, there is not yet a particular emphasis on hardware security of the clients, like erasing the clipboard content from memory after use, properly zeroing encryption keys etc. Keep it in mind when working with sensitive data, just like you do with your system clipboard.
 
 ## Self hosting an instance via Docker
 
