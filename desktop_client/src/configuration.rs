@@ -89,7 +89,7 @@ impl Default for ClipboardConfig {
 
     fn default() -> ClipboardConfig {
         ClipboardConfig {
-            host: String::from("https://clipshare.rastislavkish.xyz"),
+            host: String::from("https://clipshare.rastislavkish.com"),
             password: String::from("DefaultPassword"),
             copy_hotkey: String::new(),
             paste_hotkey: String::new(),

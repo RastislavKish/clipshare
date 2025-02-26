@@ -2,7 +2,7 @@ default_clipboard="Primary"
 
 [clipboards.Primary]
 
-host="https://clipshare.rastislavkish.xyz:3127"
+host="https://clipshare.rastislavkish.com:3127"
 password="Password"
 copy_hotkey="Alt+C"
 paste_hotkey="Alt+P"
