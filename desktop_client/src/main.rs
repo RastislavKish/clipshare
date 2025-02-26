@@ -16,7 +16,7 @@
 
 use std::collections::HashMap;
 use std::rc::Rc;
-use std::sync::Mutex;
+use std::sync::{LazyLock, Mutex};
 
 use anyhow::Context;
 use arboard::Clipboard;
@@ -25,7 +25,6 @@ use enigo::{Enigo, KeyboardControllable};
 use global_hotkey::{
     GlobalHotKeyManager, GlobalHotKeyEvent, HotKeyState,
     };
-use lazy_static::lazy_static;
 use notify_rust::Notification;
 use winit::event_loop::{ControlFlow, EventLoopBuilder};
 
@@ -36,9 +35,7 @@ mod cryptography;
 use crate::configuration::Config;
 use crate::core::{Clipshare, SharedClipboard, SharedClipboardContent};
 
-lazy_static! {
-    static ref CLIPBOARD: Mutex<Clipboard>=Mutex::new(Clipboard::new().unwrap());
-    }
+static CLIPBOARD: LazyLock<Mutex<Clipboard>> = LazyLock::new(|| Mutex::new(Clipboard::new().unwrap()));
 
 #[derive(Parser)]
 #[command(author, version, about, long_about=None)]
