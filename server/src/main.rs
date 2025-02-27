@@ -20,6 +20,7 @@ use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::time::{Instant, Duration};
+use std::sync::LazyLock;
 
 use tokio::sync::Mutex;
 
@@ -31,115 +32,114 @@ use axum::{
     Router,
     };
 use axum_server::tls_rustls::RustlsConfig;
-use lazy_static::lazy_static;
 use redis::AsyncCommands;
 use regex::Regex;
 
-lazy_static! {
-    static ref CLIPBOARD_ID_REGEX: Regex=Regex::new(
-        r"^[a-zA-Z0-9_\-]{32,128}$"
-        ).unwrap();
-    static ref CLIPBOARD_CONTENT_REGEX: Regex=Regex::new(
-        r"^[a-zA-Z0-9+/]+$"
-        ).unwrap();
-    static ref SIZE_REGEX: Regex=Regex::new(
-        r"^(?<value>\d+)(?<unit>B|K|M|G|T)?$"
-        ).unwrap();
-    static ref TIME_REGEX: Regex=Regex::new(
-        r"^(?<value>\d+)(?<unit>S|M|H|Y)?$"
-        ).unwrap();
-    static ref CLIPBOARD_MONITOR: Mutex<ClipboardMonitor>=Mutex::new(ClipboardMonitor::new());
-    static ref REDIS_HOST: redis::ConnectionInfo={
-        if let Ok(host)=std::env::var("REDIS_HOST") {
-            if let Ok(connection_info)=redis::ConnectionInfo::from_str(&host) {
-                return connection_info;
-                }
+static CLIPBOARD_ID_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(
+    r"^[a-zA-Z0-9_\-]{32,128}$"
+    ).unwrap());
+static CLIPBOARD_CONTENT_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(
+    r"^[a-zA-Z0-9+/]+$"
+    ).unwrap());
+static SIZE_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(
+    r"^(?<value>\d+)(?<unit>B|K|M|G|T)?$"
+    ).unwrap());
+/*
+static TIME_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(
+    r"^(?<value>\d+)(?<unit>S|M|H|Y)?$"
+    ).unwrap());
+*/
+static CLIPBOARD_MONITOR: LazyLock<Mutex<ClipboardMonitor>> = LazyLock::new(|| Mutex::new(ClipboardMonitor::new()));
+static REDIS_HOST: LazyLock<redis::ConnectionInfo> = LazyLock::new(|| {
+    if let Ok(host)=std::env::var("REDIS_HOST") {
+        if let Ok(connection_info)=redis::ConnectionInfo::from_str(&host) {
+            return connection_info;
+            }
+        }
+
+    redis::ConnectionInfo::from_str("redis://127.0.0.1/").unwrap()
+    });
+static REDIS_CLIENT: LazyLock<redis::Client> = LazyLock::new(|| {
+    redis::Client::open(REDIS_HOST.clone()).unwrap()
+    });
+static CERT_DIR: LazyLock<PathBuf> = LazyLock::new(|| {
+    if let Ok(v)=env::var("CERT_DIR") {
+        let cert_dir=PathBuf::from(&v);
+
+        if !cert_dir.exists() {
+            panic!("Directory {v} set in CERT_DIR environment variable does not exist.");
+            }
+        if !cert_dir.is_dir() {
+            panic!("Directory {v} set in CERT_DIR environment variable is not a directory.");
             }
 
-        redis::ConnectionInfo::from_str("redis://127.0.0.1/").unwrap()
-        };
-    static ref REDIS_CLIENT: redis::Client={
-        redis::Client::open(REDIS_HOST.clone()).unwrap()
-        };
-    static ref CERT_DIR: PathBuf={
-        if let Ok(v)=env::var("CERT_DIR") {
-            let cert_dir=PathBuf::from(&v);
+        return cert_dir;
+        }
 
-            if !cert_dir.exists() {
-                panic!("Directory {v} set in CERT_DIR environment variable does not exist.");
-                }
-            if !cert_dir.is_dir() {
-                panic!("Directory {v} set in CERT_DIR environment variable is not a directory.");
-                }
-
-            return cert_dir;
+    panic!("Error: CERT_DIR environment variable not set.");
+    });
+static SERVER_PORT: LazyLock<u16> = LazyLock::new(|| {
+    if let Ok(v)=env::var("SERVER_PORT") {
+        match v.parse::<u16>() {
+            Ok(port) => return port,
+            Err(_) => {
+                eprintln!("Warning: Invalid value in SERVER_PORT environment variable. Using the default setting.");
+                },
             }
+        }
 
-        panic!("Error: CERT_DIR environment variable not set.");
-        };
-    static ref SERVER_PORT: u16={
-        if let Ok(v)=env::var("SERVER_PORT") {
-            match v.parse::<u16>() {
-                Ok(port) => return port,
-                Err(_) => {
-                    eprintln!("Warning: Invalid value in SERVER_PORT environment variable. Using the default setting.");
-                    },
-                }
-            }
+    3127
+    });
+static RESTRICTED_TO: LazyLock<Vec<String>> = LazyLock::new(|| {
+    if let Ok(id_list)=std::env::var("RESTRICTED_TO") {
+        return id_list.split(',')
+        .filter(|id| CLIPBOARD_ID_REGEX.is_match(id))
+        .map(|id| id.to_string())
+        .collect();
+        }
 
-        3127
-        };
-    static ref RESTRICTED_TO: Vec<String>={
-        if let Ok(id_list)=std::env::var("RESTRICTED_TO") {
-            return id_list.split(',')
-            .filter(|id| CLIPBOARD_ID_REGEX.is_match(id))
-            .map(|id| id.to_string())
-            .collect();
-            }
+    Vec::new()
+    });
+static MAX_CLIPBOARD_COUNT: LazyLock<usize> = LazyLock::new(|| {
+    if let Ok(v)=env::var("MAX_CLIPBOARD_COUNT") {
+        match v.parse::<usize>() {
+            Ok(val) => return val,
+            Err(e) => eprintln!("Warning: Invalid content in MAX_CLIPBOARD_COUNT, using the default value. {e}"),
+            };
+        }
 
-        Vec::new()
-        };
-    static ref MAX_CLIPBOARD_COUNT: usize={
-        if let Ok(v)=env::var("MAX_CLIPBOARD_COUNT") {
-            match v.parse::<usize>() {
-                Ok(val) => return val,
-                Err(e) => eprintln!("Warning: Invalid content in MAX_CLIPBOARD_COUNT, using the default value. {e}"),
-                };
-            }
+    10000
+    });
+static MAX_USED_SPACE: LazyLock<usize> = LazyLock::new(|| {
+    if let Ok(v)=env::var("MAX_USED_SPACE") {
+        match parse_size(&v) {
+            Ok(val) => return val,
+            Err(e) => eprintln!("Warning: Invalid content in MAX_USED_SPACE, using the default value. {e}"),
+            };
+        }
 
-        10000
-        };
-    static ref MAX_USED_SPACE: usize={
-        if let Ok(v)=env::var("MAX_USED_SPACE") {
-            match parse_size(&v) {
-                Ok(val) => return val,
-                Err(e) => eprintln!("Warning: Invalid content in MAX_USED_SPACE, using the default value. {e}"),
-                };
-            }
+    parse_size("500M").unwrap()
+    });
+static CLIPBOARD_CONTENT_EXPIRATION_TIME: LazyLock<Duration> = LazyLock::new(|| {
+    if let Ok(v)=env::var("CLIPBOARD_CONTENT_EXPIRATION_TIME") {
+        match parse_duration(&v) {
+            Ok(duration) => return duration,
+            Err(e) => eprintln!("Warning: Invalid duration in CLIPBOARD_CONTENT_EXPIRATION_TIME. {e} Using the default value."),
+            };
+        }
 
-        parse_size("500M").unwrap()
-        };
-    static ref CLIPBOARD_CONTENT_EXPIRATION_TIME: Duration={
-        if let Ok(v)=env::var("CLIPBOARD_CONTENT_EXPIRATION_TIME") {
-            match parse_duration(&v) {
-                Ok(duration) => return duration,
-                Err(e) => eprintln!("Warning: Invalid duration in CLIPBOARD_CONTENT_EXPIRATION_TIME. {e} Using the default value."),
-                };
-            }
+    parse_duration("5M").unwrap()
+    });
+static CLIPBOARD_CONTENT_MAX_SIZE: LazyLock<usize> = LazyLock::new(|| {
+    if let Ok(v)=env::var("CLIPBOARD_CONTENT_MAX_SIZE") {
+        match parse_size(&v) {
+            Ok(size) => return size,
+            Err(e) => eprintln!("Warning: Invalid size in CLIPBOARD_CONTENT_MAX_SIZE. {e} Using the default value."),
+            };
+        }
 
-        parse_duration("5M").unwrap()
-        };
-    static ref CLIPBOARD_CONTENT_MAX_SIZE: usize={
-        if let Ok(v)=env::var("CLIPBOARD_CONTENT_MAX_SIZE") {
-            match parse_size(&v) {
-                Ok(size) => return size,
-                Err(e) => eprintln!("Warning: Invalid size in CLIPBOARD_CONTENT_MAX_SIZE. {e} Using the default value."),
-                };
-            }
-
-        parse_size("5M").unwrap()
-        };
-    }
+    parse_size("5M").unwrap()
+    });
 
 #[derive(Clone)]
 pub struct Clipboard {

@@ -12,7 +12,6 @@ edition = "2021"
 anyhow="1.0"
 axum="0.8"
 axum-server={version="0.7", features=["tls-rustls"]}
-lazy_static="1.4"
 redis={version="0.23", features=["tokio-comp"]}
 regex="1.11"
 tokio = { version = "1.43", features = ["full"] }
